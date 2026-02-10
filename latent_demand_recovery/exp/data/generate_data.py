@@ -3,6 +3,8 @@ import pandas as pd
 import numpy as np
 from datasets import load_dataset
 
+from .train_data_preprocess import preprocess
+
 def mimic_missing(patch_ts, p=0.5, max_missing_patch=7, min_missing_patch=3):
     patch_len = patch_ts.shape[-1]
     patch_num = patch_ts.shape[1]
@@ -48,24 +50,26 @@ def mimic_missing(patch_ts, p=0.5, max_missing_patch=7, min_missing_patch=3):
         
         
 def load_data(CONFIG):
-    dataset = load_dataset("Dingdong-Inc/FreshRetailNet-50K")
-    data = dataset['train'].to_pandas()
+    file_path = './data_slice.parquet'
+    if os.path.exists(file_path):
+        data_slice = pd.read_parquet(file_path)
+    else:
+        data_slice = preprocess()
+        
+    series_num = data_slice[['sequence_id', 'sub_sequence_id']].drop_duplicates().shape[0]
 
-    data = data.sort_values(by=['store_id', 'product_id', 'dt'])
-    horizon=90
-    series_num = data.shape[0]//horizon
-
+    data = data_slice
     hours_sale = np.array(data['hours_sale'].tolist())
     hours_stock_status = np.array(data['hours_stock_status'].tolist())
 
-    hours_sale_origin = hours_sale.reshape(series_num*3, 30, 24)[...,6:22]
-    hours_stock_status = hours_stock_status.reshape(series_num*3, 30, 24)[...,6:22]
+    hours_sale_origin = hours_sale.reshape(series_num, 30, 24)[...,6:22]
+    hours_stock_status = hours_stock_status.reshape(series_num, 30, 24)[...,6:22]
     hours_sale = np.where(hours_stock_status==1, np.nan, hours_sale_origin)
-    covariate = data[['discount', 'holiday_flag', 'precpt', 'avg_temperature']].values.reshape(series_num*3, 30, 4)
-    covariate = covariate/(covariate.max(axis=1, keepdims=True)+0.1)
+    covariate = data[['discount', 'holiday_flag', 'precpt', 'avg_temperature']].values.reshape(series_num, 30, 4)
+    covariate = covariate/(np.abs(covariate).max(axis=1, keepdims=True)+0.1)
 
     hours_sale, valid_idx = mimic_missing(hours_sale, p=CONFIG['missing_rate'], max_missing_patch=7, min_missing_patch=3)
-    
+
 
     # generate train dataset
     data = np.concatenate([hours_sale[...,None], np.broadcast_to(covariate[:,:,None,:], hours_sale.shape + (4,))], axis=-1)
