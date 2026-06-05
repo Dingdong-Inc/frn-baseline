@@ -15,6 +15,14 @@ conda activate py3.8_frn
 pip install -r ./requirements.txt
 ```
 
+A dedicated Python 3.11 environment is required for Chronos-2
+```bash
+conda create --name py3.11_frn python=3.11
+conda activate py3.11_frn
+pip install -r ./requirements_chronos2_py311.txt
+```
+
+
 
 ### Latent Demand Recovery
 > Latent Demand Recovery implements multiple baselines, including TimesNet, ImputeFormer, SAITS, iTransformer, GPVAE, CSDI, and DLinear. The code is referenced from [PyPOTS](https://github.com/WenjieDu/PyPOTS/tree/main).
@@ -88,6 +96,13 @@ sh train_predict.sh
 sh train_predict_on_recovered.sh
 ```
 
+#### Chronos-2
+> Chronos-2 offers zero-shot support for univariate, multivariate, and covariate-informed forecasting tasks and delivers state-of-the-art zero-shot performance across multiple benchmarks (including fev-bench and GIFT-Eval), with the largest improvements observed on tasks that include exogenous features.
+> - Paper link: [*Chronos-2: From Univariate to Universal Forecasting*](https://arxiv.org/abs/2510.15821)
+> - Reference Code link: https://github.com/amazon-science/chronos-forecasting
+
+To train and evaluate easily on censored/recovered sales, see demand_forecasting/Chronos2/readme.md.
+
 
 ## Citation
 
@@ -97,9 +112,9 @@ If you find the data useful, please cite:
       title={FreshRetailNet-LT: A Stockout-Annotated Censored Demand Dataset for Latent Demand Recovery and Forecasting in Fresh Retail},
       author={Anonymous Author(s)},
       year={2026},
-      eprint={2602.xxxxx},
+      eprint={2606.xxxxx},
       archivePrefix={arXiv},
       primaryClass={cs.LG},
-      url={https://arxiv.org/abs/2602.xxxxx},
+      url={https://arxiv.org/abs/2606.xxxxx},
 }
 ```
